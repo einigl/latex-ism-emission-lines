@@ -267,10 +267,10 @@ def transition_to_latex(transition: str) -> str:
             if n_high != n_low:
                 raise ValueError("{transition} is not a valid transition because the energy level are not in the same order in the description of the high and low levels")
             names.append(n_high)
-            high_lvls.append(e_high.removeprefix(n_high).replace('_', '/'))
-            low_lvls.append(e_low.removeprefix(n_low).replace('_', '/'))
-            high = high.removeprefix(e_high).removeprefix('_')
-            low = low.removeprefix(e_low).removeprefix('_')
+            high_lvls.append(_removeprefixes(e_high, n_high).replace('_', '/'))
+            low_lvls.append(_removeprefixes(e_low, n_low).replace('_', '/'))
+            high = _removeprefixes(high, e_high, '_')
+            low = _removeprefixes(low, e_low, '_')
             continue
 
         res_high = re.match("\A(j|v|n|f|ka|kc)\d*d\d*", high)
@@ -282,10 +282,10 @@ def transition_to_latex(transition: str) -> str:
             if n_high != n_low:
                 raise ValueError("{transition} is not a valid transition because the energy level are not in the same order in the description of the high and low levels")
             names.append(n_high)
-            high_lvls.append(e_high.removeprefix(n_high).replace('d', '.'))
-            low_lvls.append(e_low.removeprefix(n_low).replace('d', '.'))
-            high = high.removeprefix(e_high).removeprefix('_')
-            low = low.removeprefix(e_low).removeprefix('_')
+            high_lvls.append(_removeprefixes(e_high, n_high).replace('d', '.'))
+            low_lvls.append(_removeprefixes(e_low, n_low).replace('d', '.'))
+            high = _removeprefixes(high, e_high, '_')
+            low = _removeprefixes(low, e_low, '_')
             continue
 
         res_high = re.match("\A(j|v|n|f|ka|kc)\d*", high)
@@ -297,10 +297,10 @@ def transition_to_latex(transition: str) -> str:
             if n_high != n_low:
                 raise ValueError("{transition} is not a valid transition because the energy level are not in the same order in the description of the high and low levels")
             names.append(n_high)
-            high_lvls.append(e_high.removeprefix(n_high))
-            low_lvls.append(e_low.removeprefix(n_low))
-            high = high.removeprefix(e_high).removeprefix('_')
-            low = low.removeprefix(e_low).removeprefix('_')
+            high_lvls.append(_removeprefixes(e_high, n_high))
+            low_lvls.append(_removeprefixes(e_low, n_low))
+            high = _removeprefixes(high, e_high, '_')
+            low = _removeprefixes(low, e_low, '_')
             continue
 
         res_high = re.match("\Ael\d*(po|so|do)", high)
@@ -308,10 +308,10 @@ def transition_to_latex(transition: str) -> str:
         if res_high is not None and res_low is not None:
             e_high, e_low = high[:res_high.end()], low[:res_low.end()]
             names.append("el")
-            high_lvls.append(e_high.removeprefix("el"))
-            low_lvls.append(e_low.removeprefix("el"))
-            high = high.removeprefix(e_high).removeprefix('_')
-            low = low.removeprefix(e_low).removeprefix('_')
+            high_lvls.append(e_high._removeprefixes("el"))
+            low_lvls.append(e_low._removeprefixes("el"))
+            high = _removeprefixes(high, e_high, '_')
+            low = _removeprefixes(low, e_low, '_')
             continue
 
         res_high = re.match("\Ael\d*(p|s|d)", high)
@@ -319,10 +319,10 @@ def transition_to_latex(transition: str) -> str:
         if res_high is not None and res_low is not None:
             e_high, e_low = high[:res_high.end()], low[:res_low.end()]
             names.append("el")
-            high_lvls.append(e_high.removeprefix("el"))
-            low_lvls.append(e_low.removeprefix("el"))
-            high = high.removeprefix(e_high).removeprefix('_')
-            low = low.removeprefix(e_low).removeprefix('_')
+            high_lvls.append(_removeprefixes(e_high, "el"))
+            low_lvls.append(_removeprefixes(e_low, "el"))
+            high = _removeprefixes(high, e_high, '_')
+            low = _removeprefixes(low, e_low, '_')
             continue
 
         res_high = re.match("\A(pp|pm)_fif\d*", high)
@@ -330,10 +330,10 @@ def transition_to_latex(transition: str) -> str:
         if res_high is not None and res_low is not None:
             e_high, e_low = high[:res_high.end()], low[:res_low.end()]
             # names.append("el")
-            # high_lvls.append(e_high.removeprefix("el"))
-            # low_lvls.append(e_low.removeprefix("el"))
-            high = high.removeprefix(e_high).removeprefix('_')
-            low = low.removeprefix(e_low).removeprefix('_')
+            # high_lvls.append(_removeprefixes(e_high, "el"))
+            # low_lvls.append(_removeprefixes(e_low, "el"))
+            high = _removeprefixes(high, e_high, '_')
+            low = _removeprefixes(low, e_low, '_')
             continue
 
         if high == "" and low != "" or high != "" and low == "":
@@ -373,6 +373,22 @@ def line_to_latex(line_name: str) -> str:
 
 
 # Local functions
+
+def _removeprefixes(string: str, *prefixes: str) -> str:
+    """
+    Return a str with the given prefix string removed if present.
+
+    Return a copy of `string` with the prefixes `prefixes` removed iteratively if they exists.
+
+    Note
+    ----
+
+    This method doesn't use the builtin method `removeprefix` to ensure the code to be available to users with `Python < 3.9`.
+    """
+    for prefix in prefixes:
+        if string.startswith(prefix):
+            string = string[len(prefix):]
+    return string[:]
 
 def _transition(
     name: str, high_lvl: str, low_lvl: str
