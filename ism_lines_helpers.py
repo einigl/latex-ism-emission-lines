@@ -1,5 +1,5 @@
 """
-TODO
+Implements helpers to process spectral lines formatted according to Meudon PDR code standards.
 """
 
 import re
