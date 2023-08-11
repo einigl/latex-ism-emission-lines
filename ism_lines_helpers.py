@@ -455,6 +455,7 @@ def _transition(
         high_lvl_latex = high_lvl
         low_lvl_latex = low_lvl
 
+    # Determine if it is a transition or not
     if high_lvl_latex == low_lvl_latex:
         return "${}={}$".format(name_latex, low_lvl_latex), False
     return (
@@ -480,6 +481,7 @@ def _eltransition(high: str, low: str) -> Tuple[Union[str, Tuple[str, str]], boo
     bool
         True if it is a transition, else False
     """
+    # Determine if it is a transition or not
     if high == low:
         return "${}$".format(high), False
     return ("${}$".format(high), "${}$".format(low)), True
@@ -514,16 +516,22 @@ def _sort_transitions(
     # if len(names) == 1:
     #     return _transition(None, high_lvls[0], low_lvls[0])
 
-    descr_0, descr_1a, descr_1b = "", "", ""
+    # descr_0, descr_1a, descr_1b = "", "", ""
+    descr_1a, descr_1b = "", "", ""
     for name, high, low in zip(names, high_lvls, low_lvls):
         if name == "el":
             descr, istrans = _eltransition(high, low)
         else:
             descr, istrans = _transition(name, high, low)
-        if istrans:
-            descr_1a += descr[0] + ", "
-            descr_1b += descr[1] + ", "
-        else:
-            descr_0 += descr + " "
-    return "{} ({} $\\to$ {})"\
-        .format(descr_0.strip(), descr_1a[:-2], descr_1b[:-2])
+        # Factorization
+        # if istrans:
+        #     descr_1a += descr[0] + ", "
+        #     descr_1b += descr[1] + ", "
+        # else:
+        #     descr_0 += descr + " "
+        descr_1a += descr[0] + ", "
+        descr_1b += descr[1] + ", "
+    # return "{} ({} $\\to$ {})"\
+    #     .format(descr_0.strip(), descr_1a[:-2], descr_1b[:-2])
+    return "({} $\\to$ {})"\
+        .format(descr_1a[:-2], descr_1b[:-2])

@@ -10,7 +10,7 @@ This code is designed in a very simple way, in a single Python file `ism_lines_h
 
 The emission line are supposed to be formatted according to the Meudon PDR standard `species_highlevels__lowlevels`.
 
-For instance, `h2_v0_j3__v0_j1` represents the transition of $H_2$ $J=3-2$ at $\nu=0$.
+For instance, `h2_v0_j3__v0_j1` represents the transition $J=3-2$ of $H_2$ at $\nu=0$.
 
 ## Usage
 
@@ -34,10 +34,10 @@ from latex_lines import line_to_latex
 
 ```python
 line_to_latex("h2_v0_j3__v0_j1")
->>> '$H_2$ $\\nu=0$ ($J=3$ $\\to$ $J=1$)'
+>>> '$H_2$ ($\\nu=0$, $J=2$ $\\to$ $\\nu=0$, $J=0$)'
 ```
 
-$H_2$ $\nu=0$ ($J=3$ $\to$ $J=1$)
+$H_2$ ($\nu=0$, $J=2$ $\to$ $\nu=0$, $J=0$)
 
 ```python
 line_to_latex("h2o_j1_ka1_kc1__j0_ka0_kc0")
