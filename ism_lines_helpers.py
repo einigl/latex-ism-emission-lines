@@ -391,7 +391,7 @@ def _numerical_to_latex(num: str) -> str:
         a, b = num.split('.')
 
         if b == "0": 
-            n, d = 2*int(a), 1
+            n, d = int(a), 1
         elif b == "5":
             n, d = 2*int(a)+1, 2
         else:
