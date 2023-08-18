@@ -82,11 +82,21 @@ _molecules_aliases = {
 
 # Energy to LaTeX
 _energy_to_latex = {
-    "j": "J",
-    "v": "\\nu",
-    "f": "f",
-    "n": "n",
-    "ka": "k_a",
-    "kc": "k_c",
+    "j": "J={}",
+    "v": "\\nu={}",
+    # ...
+}
+
+# Electronic state to LaTeX
+_elstate_to_latex = {
+    "s": "{}s",
+    "p": "{}p",
+    # ...
+}
+
+# Literal to LaTeX
+_literal_to_latex = {
+    "pp": "p=+",
+    "pm": "p=-"
 }
 ```
