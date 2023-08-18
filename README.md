@@ -20,6 +20,7 @@ Other available functions are the following
 - `molecule_and_transition`: segment the formatted emission line in order to return the formatted chemical species and energy transition,
 - `molecule`: returns only the formatted chemical species,
 - `transition`: returns only the formatted energy transition,
+- `is_line_of`: returns whether the line belongs to a given molecule,
 - `filter_molecules`: returns the sublist of a formatted emission lines list containing only lines of species contained in a given list of chemical species,
 - `molecules_among_lines`: returns a list of chemical species present in a list of formatted emission lines (without duplicates),
 - `molecule_to_latex`: returns a LaTeX printable version of a formatted chemical species,

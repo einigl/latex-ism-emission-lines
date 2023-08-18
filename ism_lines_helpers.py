@@ -69,7 +69,7 @@ _energy_to_latex = {
     "n": "n={}",
     "ka": "k_a={}",
     "kc": "k_c={}",
-    "fif": "F_i=F{}",
+    "fif": "F_i=F_{}",
 }
 
 # Electronic state to LaTeX
