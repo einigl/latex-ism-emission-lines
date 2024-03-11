@@ -3,7 +3,7 @@ Implements helpers to process spectral lines formatted according to Meudon PDR c
 """
 
 import re
-from typing import List, Tuple, Union
+from typing import List, Tuple, Union, Optional
 from warnings import warn
 
 __all__ = [
@@ -15,7 +15,9 @@ __all__ = [
     "molecules_among_lines",
     "molecule_to_latex",
     "transition_to_latex",
-    "line_to_latex"
+    "line_to_latex",
+    "remove_hyperfine",
+    "is_hyperfine"
 ]
 
 
@@ -130,7 +132,7 @@ def molecule_and_transition(line_name: str) -> Tuple[str, str]:
 
 def molecule(line_name: str) -> str:
     """
-    Returns the raw strings of the molecule name and the transition.
+    Returns the raw strings of the molecule name.
 
     Parameters
     ----------
@@ -146,7 +148,7 @@ def molecule(line_name: str) -> str:
 
 def transition(line_name: str) -> str:
     """
-    Returns the raw strings of the molecule name and the transition.
+    Returns the raw strings of the transition.
 
     Parameters
     ----------
@@ -263,6 +265,70 @@ def transition_to_latex(transition: str) -> str:
     str
         LaTeX string representing `transition`.
     """
+    names, high_lvls, low_lvls = _list_transitions(transition)
+    return _sort_transitions(names, high_lvls, low_lvls)
+
+def line_to_latex(line_name: str) -> str:
+    """
+    Returns a well displayed version of the formatted line `line_name`.
+
+    Parameters
+    ----------
+    line_name : str
+        Formatted line.
+
+    Returns
+    -------
+    str
+        LaTeX string representing `line_name`.
+    """
+
+    prefix, suffix = molecule_and_transition(line_name)
+
+    # Convert the prefix in LaTeX
+    latex_prefix = molecule_to_latex(prefix)
+
+    # Convert the suffix in LaTeX
+    latex_suffix = transition_to_latex(suffix)
+
+    out = latex_prefix + " " + latex_suffix
+    out = out.replace("  ", " ") # Remove double spaces
+    return out
+
+def remove_hyperfine(line_name: str) -> str:
+    """
+    Returns the formatted line `line_name` without the degenerate energy levels.
+    If there is no such levels, this function returns a copy of the input.
+    """
+    mol, trans = molecule_and_transition(line_name)
+    if trans.count("__") != 1:
+        raise ValueError(f"{transition} is not a valid transition because it does not contain one occurence of the double underscore")
+    
+    trans_high, trans_low = trans.split("__")
+    for prefix in ["f"]:
+        trans_high = "_".join([s for s in trans_high.split("_") if not s.startswith(prefix)])
+        trans_low = "_".join([s for s in trans_low.split("_") if not s.startswith(prefix)])
+
+    return f"{mol}_{trans_high}__{trans_low}"
+
+def is_hyperfine(line: str, other: Optional[str]=None) -> bool:
+    """
+    Returns whether the formatted line `line` contains hyperfine levels.
+    If `other` is not None, returns whether the two lines correspond to the same hyperfine structure.
+    If `line` and `other` are the exact same line, returns True.
+    """
+    _line = remove_hyperfine(line)
+    if other is None:
+        return line != _line
+    _other = remove_hyperfine(other)
+    return _line == _other
+
+# Local functions
+
+def _list_transitions(transition: str) -> Tuple[List, List, List]:
+    """
+    TODO
+    """
     if transition.count("__") != 1:
         raise ValueError(f"{transition} is not a valid transition because it does not contain one occurence of the double underscore")
     high, low = transition.split("__")
@@ -318,41 +384,13 @@ def transition_to_latex(transition: str) -> str:
         if high == "" and low != "" or high != "" and low == "":
             raise RuntimeError("high and low levels does not contain the same number of variables")
         
-    return _sort_transitions(names, high_lvls, low_lvls)
-
-def line_to_latex(line_name: str) -> str:
-    """
-    Returns a well displayed version of the formatted line `line_name`.
-
-    Parameters
-    ----------
-    line_name : str
-        Formatted line.
-
-    Returns
-    -------
-    str
-        LaTeX string representing `line_name`.
-    """
-
-    prefix, suffix = molecule_and_transition(line_name)
-
-    # Convert the prefix in LaTeX
-    latex_prefix = molecule_to_latex(prefix)
-
-    # Convert the suffix in LaTeX
-    latex_suffix = transition_to_latex(suffix)
-
-    out = latex_prefix + " " + latex_suffix
-    out = out.replace("  ", " ") # Remove double spaces
-    return out
-
-
-# Local functions
+        print(high, low)
+        
+    return names, high_lvls, low_lvls
 
 def _removeprefixes(string: str, *prefixes: str) -> str:
     """
-    Return a str with the given prefix string removed if present.
+    Returns a str with the given prefix string removed if present.
 
     Return a copy of `string` with the prefixes `prefixes` removed iteratively if they exists.
 

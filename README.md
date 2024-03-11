@@ -25,10 +25,12 @@ Other available functions are the following
 - `molecules_among_lines`: returns a list of chemical species present in a list of formatted emission lines (without duplicates),
 - `molecule_to_latex`: returns a LaTeX printable version of a formatted chemical species,
 - `transition_to_latex`: returns a LaTeX printable version of a formatted energy transition.
+- `remove_hyperfine`: return a shorter version of the formatter line without hyperfine levels.
+- `is_hyperfine`: returns whether a line corresponds to a degenerate energy level or whether two lines belong to the same hyperfine structure.
 
-After moving the file `latex_lines.py` in a directory that is in your Python path (if it is not the case, consider using the command `sys.path.append(path_of_containing_folder)`), you can import any of the above functions. For instance
+After moving the file `ism_lines_helpers.py` in a directory that is in your Python path (if it is not the case, consider using the command `sys.path.append(path_of_containing_folder)`), you can import any of the above functions. For instance
 ```python
-from latex_lines import line_to_latex
+from ism_lines_helpers import line_to_latex
 ```
 
 ## Examples
