@@ -325,9 +325,9 @@ def is_hyperfine(line: str, other: Optional[str]=None) -> bool:
 
 # Local functions
 
-def _list_transitions(transition: str) -> Tuple[List, List, List]:
+def _list_transitions(transition: str) -> Tuple[List[str], List[float], List[float]]:
     """
-    TODO
+    Returns the lists of energy level names, high energy level and low energy level.
     """
     if transition.count("__") != 1:
         raise ValueError(f"{transition} is not a valid transition because it does not contain one occurence of the double underscore")
