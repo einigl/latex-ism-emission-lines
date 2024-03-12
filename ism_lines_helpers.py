@@ -251,21 +251,21 @@ def molecule_to_latex(molecule: str) -> str:
 
     return latex_molecule
 
-def transition_to_latex(transition: str) -> str:
+def transition_to_latex(trans: str) -> str:
     """
-    Returns a well displayed version of the formatted transition `transition`.
+    Returns a well displayed version of the formatted transition `trans`.
 
     Parameters
     ----------
-    transition : str
+    trans : str
         Formatted transition.
 
     Returns
     -------
     str
-        LaTeX string representing `transition`.
+        LaTeX string representing `trans`.
     """
-    names, high_lvls, low_lvls = _list_transitions(transition)
+    names, high_lvls, low_lvls = _list_transitions(trans)
     return _sort_transitions(names, high_lvls, low_lvls)
 
 def line_to_latex(line_name: str) -> str:
@@ -299,6 +299,17 @@ def remove_hyperfine(line_name: str) -> str:
     """
     Returns the formatted line `line_name` without the degenerate energy levels.
     If there is no such levels, this function returns a copy of the input.
+
+    Parameters
+    ----------
+    line_name : str
+        Formatted line.
+
+    Returns
+    -------
+    str
+        New formatted line name without degenerate energy levels.
+
     """
     mol, trans = molecule_and_transition(line_name)
     if trans.count("__") != 1:
@@ -316,6 +327,18 @@ def is_hyperfine(line: str, other: Optional[str]=None) -> bool:
     Returns whether the formatted line `line` contains hyperfine levels.
     If `other` is not None, returns whether the two lines correspond to the same hyperfine structure.
     If `line` and `other` are the exact same line, returns True.
+
+    Parameters
+    ----------
+    line : str
+        Formatted line.
+    other : str, optional
+        Other formatted line. Default: None.
+
+    Returns
+    -------
+    bool
+        Whether `line` contains hyperfine levels or whether line and other belongs to the same hyperfine structure.
     """
     _line = remove_hyperfine(line)
     if other is None:
@@ -325,13 +348,13 @@ def is_hyperfine(line: str, other: Optional[str]=None) -> bool:
 
 # Local functions
 
-def _list_transitions(transition: str) -> Tuple[List[str], List[float], List[float]]:
+def _list_transitions(trans: str) -> Tuple[List[str], List[float], List[float]]:
     """
     Returns the lists of energy level names, high energy level and low energy level.
     """
-    if transition.count("__") != 1:
-        raise ValueError(f"{transition} is not a valid transition because it does not contain one occurence of the double underscore")
-    high, low = transition.split("__")
+    if trans.count("__") != 1:
+        raise ValueError(f"{trans} is not a valid transition because it does not contain one occurence of the double underscore")
+    high, low = trans.split("__")
 
     names = []
     high_lvls, low_lvls = [], []
@@ -345,7 +368,7 @@ def _list_transitions(transition: str) -> Tuple[List[str], List[float], List[flo
             n_high = re.match("\A(fif|j|v|n|f|ka|kc)", e_high).group()
             n_low = re.match("\A(fif|j|v|n|f|ka|kc)", e_low).group()
             if n_high != n_low:
-                raise ValueError("{transition} is not a valid transition because the energy levels are not in the same order in the description of the high and low levels")
+                raise ValueError(f"{trans} is not a valid transition because the energy levels are not in the same order in the description of the high and low levels")
             names.append(n_high)
             high_lvls.append(_removeprefixes(e_high, n_high)\
                 .replace('_', '/').replace('d', '.')
@@ -384,8 +407,8 @@ def _list_transitions(transition: str) -> Tuple[List[str], List[float], List[flo
         if high == "" and low != "" or high != "" and low == "":
             raise RuntimeError("high and low levels does not contain the same number of variables")
         
-        print(high, low)
-        
+        raise ValueError(f"transition {trans} is not a valid formatted line")
+                
     return names, high_lvls, low_lvls
 
 def _removeprefixes(string: str, *prefixes: str) -> str:
