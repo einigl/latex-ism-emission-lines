@@ -7,6 +7,7 @@ from typing import List, Tuple, Union, Optional
 from warnings import warn
 
 __all__ = [
+    "Settings",
     "molecule_and_transition",
     "molecule",
     "transition",
@@ -20,6 +21,15 @@ __all__ = [
     "is_hyperfine"
 ]
 
+
+## Global settings
+
+class Settings:
+    math_mode: bool = True # Controls whether latex code will be embedded in a math mode
+    ignored_transitions: List[str] = [] # Defines transitions to ignores (see _energy_to_latex)
+    ignore_electronic: bool = False # Choose whether to ignore electronic configurations
+    ignore_litterals: bool = False # Choose whether to ignore other configurations
+    only_rotational: bool = False # Choose a simplified description with only the J transition
 
 ## Dicts
 
@@ -245,10 +255,12 @@ def molecule_to_latex(molecule: str) -> str:
         LaTeX string representing `molecule`.
     """
     if molecule in _molecules_to_latex:
-        latex_molecule = "$\\mathrm{{{}}}$".format(_molecules_to_latex[molecule])
+        latex_molecule = "\\mathrm{{{}}}".format(_molecules_to_latex[molecule])
     else:
-        latex_molecule = molecule
+        latex_molecule = molecule.translate(None, '_^')
 
+    if Settings.math_mode:
+        return "$" + latex_molecule + "$"
     return latex_molecule
 
 def transition_to_latex(trans: str) -> str:
@@ -266,7 +278,19 @@ def transition_to_latex(trans: str) -> str:
         LaTeX string representing `trans`.
     """
     names, high_lvls, low_lvls = _list_transitions(trans)
-    return _sort_transitions(names, high_lvls, low_lvls)
+
+    if len(names) == 0:
+        return ""
+
+    if Settings.only_rotational:
+        latex_transition = _simplified_transition(names, high_lvls, low_lvls)
+    else:
+        latex_transition = _sort_transitions(names, high_lvls, low_lvls)
+
+    if Settings.math_mode:
+        return "$" + latex_transition + "$"
+    return latex_transition
+
 
 def line_to_latex(line_name: str) -> str:
     """
@@ -286,13 +310,16 @@ def line_to_latex(line_name: str) -> str:
     prefix, suffix = molecule_and_transition(line_name)
 
     # Convert the prefix in LaTeX
-    latex_prefix = molecule_to_latex(prefix)
+    latex_prefix = molecule_to_latex(prefix).replace("$", "")
 
     # Convert the suffix in LaTeX
-    latex_suffix = transition_to_latex(suffix)
+    latex_suffix = transition_to_latex(suffix).replace("$", "")
 
-    out = latex_prefix + " " + latex_suffix
-    out = out.replace("  ", " ") # Remove double spaces
+    out = latex_prefix + "\\," + latex_suffix
+    # out = out.replace("  ", " ") # Remove double spaces
+
+    if Settings.math_mode:
+        return "$" + out + "$"
     return out
 
 def remove_hyperfine(line_name: str) -> str:
@@ -369,13 +396,14 @@ def _list_transitions(trans: str) -> Tuple[List[str], List[float], List[float]]:
             n_low = re.match("\A(fif|j|v|n|f|ka|kc)", e_low).group()
             if n_high != n_low:
                 raise ValueError(f"{trans} is not a valid transition because the energy levels are not in the same order in the description of the high and low levels")
-            names.append(n_high)
-            high_lvls.append(_removeprefixes(e_high, n_high)\
-                .replace('_', '/').replace('d', '.')
-            )
-            low_lvls.append(_removeprefixes(e_low, n_low)\
-                .replace('_', '/').replace('d', '.')
-            )
+            if (not Settings.only_rotational and not n_high in Settings.ignored_transitions) or (Settings.only_rotational and n_high == 'j'):
+                names.append(n_high)
+                high_lvls.append(_removeprefixes(e_high, n_high)\
+                    .replace('_', '/').replace('d', '.')
+                )
+                low_lvls.append(_removeprefixes(e_low, n_low)\
+                    .replace('_', '/').replace('d', '.')
+                )
             high = _removeprefixes(high, e_high, '_')
             low = _removeprefixes(low, e_low, '_')
             continue
@@ -385,9 +413,10 @@ def _list_transitions(trans: str) -> Tuple[List[str], List[float], List[float]]:
         res_low = re.match("\Ael\d*(po|so|do|p|s|d)", low)
         if res_high is not None and res_low is not None:
             e_high, e_low = high[:res_high.end()], low[:res_low.end()]
-            names.append("el")
-            high_lvls.append(_removeprefixes(e_high, "el"))
-            low_lvls.append(_removeprefixes(e_low, "el"))
+            if not Settings.ignore_electronic and not Settings.only_rotational:
+                names.append("el")
+                high_lvls.append(_removeprefixes(e_high, "el"))
+                low_lvls.append(_removeprefixes(e_low, "el"))
             high = _removeprefixes(high, e_high, '_')
             low = _removeprefixes(low, e_low, '_')
             continue
@@ -397,9 +426,10 @@ def _list_transitions(trans: str) -> Tuple[List[str], List[float], List[float]]:
         res_low = re.match("\A(pp|pm)", low)
         if res_high is not None and res_low is not None:
             e_high, e_low = high[:res_high.end()], low[:res_low.end()]
-            names.append("lit")
-            high_lvls.append(e_high)
-            low_lvls.append(e_low)
+            if not Settings.ignore_litterals and not Settings.only_rotational:
+                names.append("lit")
+                high_lvls.append(e_high)
+                low_lvls.append(e_low)
             high = _removeprefixes(high, e_high, '_')
             low = _removeprefixes(low, e_low, '_')
             continue
@@ -497,8 +527,8 @@ def _transition(
     low_lvl_latex = _numerical_to_latex(low_lvl)
 
     return (
-        "$" + name_latex.format(high_lvl_latex) + "$",
-        "$" + name_latex.format(low_lvl_latex) + "$"
+        name_latex.format(high_lvl_latex),
+        name_latex.format(low_lvl_latex)
     )
 
 def _eltransition(high: str, low: str) -> Tuple[str, str]:
@@ -522,8 +552,8 @@ def _eltransition(high: str, low: str) -> Tuple[str, str]:
     num_high, orb_high = high[0], high[1:]
     num_low, orb_low = low[0], low[1:]
     return (
-        "$" + (_elstate_to_latex[orb_high].format(num_high) if orb_high in _elstate_to_latex else high) + "$",
-        "$" + (_elstate_to_latex[orb_low].format(num_low) if orb_low in _elstate_to_latex else low) + "$",
+        (_elstate_to_latex[orb_high].format(num_high) if orb_high in _elstate_to_latex else high),
+        (_elstate_to_latex[orb_low].format(num_low) if orb_low in _elstate_to_latex else low),
     )
 
 def _littransition(high: str, low: str) -> Tuple[str, str]:
@@ -545,8 +575,8 @@ def _littransition(high: str, low: str) -> Tuple[str, str]:
         Lower configuration formatted in LaTeX.
     """
     return (
-        "${}$".format(_literal_to_latex[high] if high in _literal_to_latex else high),
-        "${}$".format(_literal_to_latex[low] if low in _literal_to_latex else low)
+        _literal_to_latex[high] if high in _literal_to_latex else high,
+        _literal_to_latex[low] if low in _literal_to_latex else low
     )
 
 def _sort_transitions(
@@ -584,7 +614,34 @@ def _sort_transitions(
             descr = _eltransition(high, low)
         else:
             descr = _transition(name, high, low)
-        descr_a += descr[0] + ", "
-        descr_b += descr[1] + ", "
+        descr_a += descr[0] + ",\\,"
+        descr_b += descr[1] + ",\\,"
 
-    return "({} $\\to$ {})".format(descr_a[:-2], descr_b[:-2])
+    return "({}\\,\\to\\,{})".format(descr_a[:-3], descr_b[:-3])
+
+def _simplified_transition(
+    names: List[str], high_lvls: List[int], low_lvls: List[int]
+) -> str:
+    """
+    Returns a LaTeX string representing only the rotational level transitions.
+
+    Parameters
+    ----------
+    names : list of str
+        Energies names with a single element.
+    high_lvls : list of int
+        List of higher level with a single element.
+    low_lvls : List of int.
+        List of lower level with a single element.
+
+    Returns
+    -------
+    str
+        String representing the rotation level transitions.
+
+    """
+    assert len(names) == len(high_lvls) == len(low_lvls) == 1
+    assert names[0] == 'j'
+    h, l = high_lvls[0], low_lvls[0]
+
+    return "({}\\,\\to\\,{})".format(_numerical_to_latex(h), _numerical_to_latex(l))
